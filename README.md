@@ -133,10 +133,13 @@ GIWA Sepolia — chain id **91342**, RPC `https://sepolia-rpc.giwa.io`, explorer
 
 | Network      | Contract           | Address |
 | ------------ | ------------------ | ------- |
-| GIWA Sepolia | `ERC2771Forwarder` | _TBD_   |
-| GIWA Sepolia | `MSPToken`         | _TBD_   |
+| GIWA Sepolia | `ERC2771Forwarder` | [`0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2`](https://sepolia-explorer.giwa.io/address/0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2) |
+| GIWA Sepolia | `MSPToken`         | [`0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f`](https://sepolia-explorer.giwa.io/address/0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f) |
 
-_(Filled in after deployment.)_
+Both contracts are source-verified on Blockscout. Example of the full voting flow on GIWA Sepolia:
+
+- tx1 (mint, paid by minter): [`0x822ceeba...658ff`](https://sepolia-explorer.giwa.io/tx/0x822ceebab3f8c2eee39fd50e6e3717061a166779d745b522c71725e1fbe658ff)
+- tx2 (gas-sponsored transfer, voter holds zero ETH): [`0xa0d981a3...2f443`](https://sepolia-explorer.giwa.io/tx/0xa0d981a34a083cc403305d79e207af5b89a3e74e67724c9a780f51f78aa2f443)
 
 ## Trust model
 
