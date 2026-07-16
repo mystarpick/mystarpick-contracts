@@ -23,6 +23,11 @@ contract Deploy is Script {
         address admin = _envAddressOr("ADMIN_ADDRESS", deployer);
         address minter = _envAddressOr("MINTER_ADDRESS", deployer);
 
+        // Abort before broadcasting if an env value was explicitly set to the zero address
+        // (e.g. MINTER_ADDRESS=0x000...000 as a mistaken "unset"). The constructor also guards
+        // this, but failing here avoids spending gas on a doomed deployment.
+        require(admin != address(0) && minter != address(0), "admin/minter must be non-zero");
+
         vm.startBroadcast();
 
         forwarder = new ERC2771Forwarder("MyStarPick Forwarder");

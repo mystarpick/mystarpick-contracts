@@ -29,14 +29,25 @@ contract MSPToken is ERC20, ERC2771Context, AccessControl {
     ///      revoke MINTER_ROLE).
     error MSPTokenZeroAdmin();
 
-    /// @param trustedForwarder Address of the ERC-2771 forwarder that may relay meta-transactions.
+    /// @dev Thrown when the minter address is the zero address. Granting MINTER_ROLE to the
+    ///      zero address is almost always an operator mistake (e.g. exporting MINTER_ADDRESS=0x0
+    ///      intending "unset"); rejecting it prevents a silently misconfigured deployment.
+    error MSPTokenZeroMinter();
+
+    /// @dev Thrown when the trusted forwarder is the zero address. The forwarder is immutable,
+    ///      so a zero value cannot be corrected after deployment and would disable meta-transactions.
+    error MSPTokenZeroForwarder();
+
+    /// @param trustedForwarder Address of the ERC-2771 forwarder that may relay meta-transactions. Must be non-zero.
     /// @param admin Address granted DEFAULT_ADMIN_ROLE (can manage roles). Must be non-zero.
-    /// @param minter Address granted MINTER_ROLE (can mint vote tokens).
+    /// @param minter Address granted MINTER_ROLE (can mint vote tokens). Must be non-zero.
     constructor(address trustedForwarder, address admin, address minter)
         ERC20("MyStarPick", "MSP")
         ERC2771Context(trustedForwarder)
     {
+        if (trustedForwarder == address(0)) revert MSPTokenZeroForwarder();
         if (admin == address(0)) revert MSPTokenZeroAdmin();
+        if (minter == address(0)) revert MSPTokenZeroMinter();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MINTER_ROLE, minter);
     }

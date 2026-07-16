@@ -54,9 +54,19 @@ contract MSPTokenTest is Test {
         assertEq(token.totalSupply(), 10);
     }
 
+    function test_Constructor_RevertOnZeroForwarder() public {
+        vm.expectRevert(MSPToken.MSPTokenZeroForwarder.selector);
+        new MSPToken(address(0), admin, minter);
+    }
+
     function test_Constructor_RevertOnZeroAdmin() public {
         vm.expectRevert(MSPToken.MSPTokenZeroAdmin.selector);
         new MSPToken(address(forwarder), address(0), minter);
+    }
+
+    function test_Constructor_RevertOnZeroMinter() public {
+        vm.expectRevert(MSPToken.MSPTokenZeroMinter.selector);
+        new MSPToken(address(forwarder), admin, address(0));
     }
 
     function test_Mint_RevertWhenNotMinter() public {
