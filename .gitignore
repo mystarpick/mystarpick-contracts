@@ -1,0 +1,15 @@
+# Foundry build artifacts
+out/
+cache/
+
+# Broadcast logs (contain deployment tx data; regenerated per run)
+broadcast/
+
+# Environment / secrets — never commit real keys
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+*.swp
