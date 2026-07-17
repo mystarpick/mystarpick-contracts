@@ -141,6 +141,14 @@ Both contracts are source-verified on Blockscout. Example of the full voting flo
 - tx1 (mint, paid by minter): [`0x822ceeba...658ff`](https://sepolia-explorer.giwa.io/tx/0x822ceebab3f8c2eee39fd50e6e3717061a166779d745b522c71725e1fbe658ff)
 - tx2 (gas-sponsored transfer, voter holds zero ETH): [`0xa0d981a3...2f443`](https://sepolia-explorer.giwa.io/tx/0xa0d981a34a083cc403305d79e207af5b89a3e74e67724c9a780f51f78aa2f443)
 
+> The testnet contracts above were deployed from tag
+> [`giwa-sepolia-v1`](../../releases/tag/giwa-sepolia-v1), so their verified
+> Blockscout source matches that tag exactly. Commits after it add
+> constructor zero-address guards (`MSPTokenZeroMinter` / `MSPTokenZeroForwarder`),
+> which only harden the *next* deployment — they do not change the runtime
+> behaviour of the already-deployed testnet token. The mainnet deployment will use
+> the current `main`.
+
 ## Trust model
 
 MSP is intentionally minimal, so its integrity rests on a small set of explicit
