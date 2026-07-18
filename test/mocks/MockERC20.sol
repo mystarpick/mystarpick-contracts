@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/// @title MockERC20
+/// @notice TEST/DEMO-ONLY ERC-20 with an unrestricted public {mint}. NOT a product contract.
+/// @dev This is a stand-in for a real GIWA mainnet token (or the future MSC token) so the
+///      {VotingRightsGateway} PoC can be exercised in tests and on GIWA Sepolia. It carries
+///      18 decimals and lets anyone mint any amount — acceptable only because it holds no value
+///      and exists purely to demonstrate the purchase flow. Do NOT deploy this to any mainnet
+///      or treat it as a real asset.
+contract MockERC20 is ERC20 {
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
+
+    /// @notice Mint `amount` tokens to `to`. Unrestricted — demo/test only.
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
