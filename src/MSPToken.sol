@@ -38,6 +38,16 @@ contract MSPToken is ERC20, ERC2771Context, AccessControl {
     ///      so a zero value cannot be corrected after deployment and would disable meta-transactions.
     error MSPTokenZeroForwarder();
 
+    /// @dev Thrown when `mintAndRoute` is called with the zero address as the voter. Minting vote
+    ///      tokens to the zero address would revert inside ERC20._mint anyway; guarding here gives a
+    ///      clear, named error at the vote entry point.
+    error MSPTokenZeroUser();
+
+    /// @dev Thrown when `mintAndRoute` is called with the zero address as the candidate. Routing a
+    ///      vote to the zero address would burn it (ERC20._transfer rejects the zero recipient), so
+    ///      an explicit guard prevents a vote from being silently lost.
+    error MSPTokenZeroCandidate();
+
     /// @param trustedForwarder Address of the ERC-2771 forwarder that may relay meta-transactions. Must be non-zero.
     /// @param admin Address granted DEFAULT_ADMIN_ROLE (can manage roles). Must be non-zero.
     /// @param minter Address granted MINTER_ROLE (can mint vote tokens). Must be non-zero.
@@ -64,6 +74,27 @@ contract MSPToken is ERC20, ERC2771Context, AccessControl {
     /// @param amount Number of tokens to mint (raw integer, no scaling).
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
+    }
+
+    /// @notice Mint `amount` vote tokens to `user`, then immediately route them to `candidate`,
+    ///         all in one transaction. Restricted to MINTER_ROLE. Preserves the two Transfer
+    ///         events (0x0 -> user, user -> candidate) so the on-chain vote trail is identical to
+    ///         the previous two-transaction (mint + user-signed transfer) flow.
+    /// @dev Collapses the vote into a single minter-submitted transaction: the ERC-2771 forwarder
+    ///      and the voter signature are no longer on the vote path (mint and the internal transfer
+    ///      are both authorized by MINTER_ROLE, not by the voter). The existing ERC2771 wiring is
+    ///      left intact so the plain `transfer` meta-transaction flow keeps working for backward
+    ///      compatibility. `amount == 0` is intentionally allowed: it is harmless (both transfers
+    ///      are no-ops that still emit the two zero-value Transfer events) and mirrors ERC-20, which
+    ///      permits zero-value transfers.
+    /// @param user Voter who is credited with the freshly minted tokens before they are routed.
+    /// @param candidate Recipient the vote tokens are transferred to. Must be non-zero.
+    /// @param amount Number of vote tokens to mint and route (raw integer, no scaling).
+    function mintAndRoute(address user, address candidate, uint256 amount) external onlyRole(MINTER_ROLE) {
+        if (user == address(0)) revert MSPTokenZeroUser();
+        if (candidate == address(0)) revert MSPTokenZeroCandidate();
+        _mint(user, amount);
+        _transfer(user, candidate, amount);
     }
 
     // ---------------------------------------------------------------------

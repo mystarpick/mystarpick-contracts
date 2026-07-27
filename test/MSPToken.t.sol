@@ -95,6 +95,48 @@ contract MSPTokenTest is Test {
     }
 
     // ------------------------------------------------------------------
+    // 3b. Single-transaction mint + route (mintAndRoute)
+    // ------------------------------------------------------------------
+
+    function test_MintAndRoute_ByMinter() public {
+        // Both Transfer events must fire in order: mint (0x0 -> user) then route (user -> candidate),
+        // reproducing the exact on-chain trail of the old two-transaction flow.
+        vm.expectEmit(true, true, false, true, address(token));
+        emit IERC20.Transfer(address(0), voter.addr, 9);
+        vm.expectEmit(true, true, false, true, address(token));
+        emit IERC20.Transfer(voter.addr, candidate, 9);
+
+        vm.prank(minter);
+        token.mintAndRoute(voter.addr, candidate, 9);
+
+        assertEq(token.balanceOf(voter.addr), 0);
+        assertEq(token.balanceOf(candidate), 9);
+        assertEq(token.totalSupply(), 9);
+    }
+
+    function test_MintAndRoute_RevertWhenNotMinter() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, candidate, token.MINTER_ROLE()
+            )
+        );
+        vm.prank(candidate);
+        token.mintAndRoute(voter.addr, candidate, 9);
+    }
+
+    function test_MintAndRoute_RevertOnZeroUser() public {
+        vm.expectRevert(MSPToken.MSPTokenZeroUser.selector);
+        vm.prank(minter);
+        token.mintAndRoute(address(0), candidate, 9);
+    }
+
+    function test_MintAndRoute_RevertOnZeroCandidate() public {
+        vm.expectRevert(MSPToken.MSPTokenZeroCandidate.selector);
+        vm.prank(minter);
+        token.mintAndRoute(voter.addr, address(0), 9);
+    }
+
+    // ------------------------------------------------------------------
     // 4. Meta-transaction: voter -> candidate transfer, relayer pays gas
     // ------------------------------------------------------------------
 
