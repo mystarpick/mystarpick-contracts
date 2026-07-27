@@ -133,10 +133,22 @@ GIWA Sepolia — chain id **91342**, RPC `https://sepolia-rpc.giwa.io`, explorer
 
 | Network      | Contract           | Address |
 | ------------ | ------------------ | ------- |
+| GIWA Sepolia | `MSPToken` (v2, current) | [`0x62129f2b2B9337fa676b5B01a75de40C91221616`](https://sepolia-explorer.giwa.io/address/0x62129f2b2B9337fa676b5B01a75de40C91221616) |
 | GIWA Sepolia | `ERC2771Forwarder` | [`0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2`](https://sepolia-explorer.giwa.io/address/0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2) |
-| GIWA Sepolia | `MSPToken`         | [`0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f`](https://sepolia-explorer.giwa.io/address/0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f) |
+| GIWA Sepolia | `MSPToken` (v1) | [`0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f`](https://sepolia-explorer.giwa.io/address/0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f) |
 
-Both contracts are source-verified on Blockscout. Example of the full voting flow on GIWA Sepolia:
+All contracts are source-verified on Blockscout.
+
+**v2 (tag [`giwa-sepolia-v2`](../../releases/tag/giwa-sepolia-v2)) — current vote token.** Adds
+`mintAndRoute(user, candidate, amount)` (MINTER_ROLE only), which mints to the voter and routes
+to the candidate **in a single transaction** — no user signature, no forwarder round-trip. It
+halves the vote path (2 txs → 1) and gas, while preserving the same two `Transfer` events
+(`0x0 → user`, `user → candidate`) so the on-chain vote trail is identical. Example single-tx vote:
+[`0x2b70b87e…84b6`](https://sepolia-explorer.giwa.io/tx/0x2b70b87e7e349ed4b3a9ac0dadf416758d71e6cf08593f66e9b23a32e04884b6)
+(one transaction containing both the mint and the route).
+
+The v1 contracts (tag [`giwa-sepolia-v1`](../../releases/tag/giwa-sepolia-v1)) remain deployed for
+reference; they used a two-transaction flow (mint + gas-sponsored ERC-2771 transfer). Example: 
 
 - tx1 (mint, paid by minter): [`0x822ceeba...658ff`](https://sepolia-explorer.giwa.io/tx/0x822ceebab3f8c2eee39fd50e6e3717061a166779d745b522c71725e1fbe658ff)
 - tx2 (gas-sponsored transfer, voter holds zero ETH): [`0xa0d981a3...2f443`](https://sepolia-explorer.giwa.io/tx/0xa0d981a34a083cc403305d79e207af5b89a3e74e67724c9a780f51f78aa2f443)
