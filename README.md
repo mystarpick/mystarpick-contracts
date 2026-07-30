@@ -4,11 +4,9 @@ Smart contracts for **MyStarPick**'s on-chain voting token (**MSP**) on the
 [GIWA](https://giwa.io) chain. This repository is the public submission for the
 GASOK Phase 2 review.
 
-MSP is a minimal ERC-20 whose balance represents raw vote counts. It is a GIWA
-counterpart to MyStarPick's existing Kaia MSP token
-(`0xf3fb962716229265fe9532cb4cb7e7c9fdca5713`), and matches it exactly on the
-metadata that the vote-processing backend depends on: `name = "MyStarPick"`,
-`symbol = "MSP"`, and **`decimals = 0`** (one token = one vote, no scaling).
+MSP is a minimal ERC-20 whose balance represents raw vote counts. Its metadata is
+fixed by the vote-processing backend: `name = "MyStarPick"`, `symbol = "MSP"`, and
+**`decimals = 0`** (one token = one vote, no scaling).
 
 ## Architecture
 
@@ -57,8 +55,9 @@ Voting is settled in **two transactions**, with the voter paying **no gas**:
 
 `MSPToken` exposes:
 
-- `mint(address to, uint256 amount)` — restricted to `MINTER_ROLE` (ABI-compatible
-  with the Kaia MSP token).
+- `mint(address to, uint256 amount)` — restricted to `MINTER_ROLE`.
+- `mintAndRoute(address user, address candidate, uint256 amount)` — mints to the voter
+  and routes to the candidate in a single transaction; restricted to `MINTER_ROLE`.
 - Standard ERC-20 `transfer` / `approve` / `transferFrom`.
 - `AccessControl` role management under `DEFAULT_ADMIN_ROLE`.
 

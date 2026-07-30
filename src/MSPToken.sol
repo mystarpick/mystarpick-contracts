@@ -8,15 +8,13 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title MSPToken
 /// @notice MyStarPick (MSP) voting token for the GIWA chain.
-/// @dev Minimal ERC-20 with `decimals() == 0` to match the existing Kaia MSP token
-///      (0xf3fb962716229265fe9532cb4cb7e7c9fdca5713), where vote counts are minted and
-///      transferred as raw integers with no scaling.
+/// @dev Minimal ERC-20 with `decimals() == 0`: vote counts are minted and transferred as
+///      raw integers with no scaling (one token = one vote).
 ///
-///      Voting flow (two transactions):
-///        tx1: an address holding MINTER_ROLE mints vote tokens to the voter.
-///        tx2: the voter transfers tokens to a candidate. This transfer is submitted as an
-///             ERC-2771 meta-transaction relayed through a trusted forwarder, so the voter
-///             pays no gas (gas is sponsored by the relayer).
+///      Voting flow: an address holding MINTER_ROLE records a vote via {mintAndRoute}, which
+///      mints vote tokens to the voter and routes them to the candidate in a single
+///      transaction. A trusted ERC-2771 forwarder is also wired in for gas-sponsored voter
+///      transfers when needed.
 ///
 ///      Only ERC-20 transfer/mint and role-gated minting are supported. No burn, pause, or
 ///      upgradeability by design — the token is intentionally minimal.
@@ -63,13 +61,13 @@ contract MSPToken is ERC20, ERC2771Context, AccessControl {
     }
 
     /// @notice Number of decimals used by the token.
-    /// @dev Returns 0 so that one token equals one vote, matching the Kaia MSP token.
+    /// @dev Returns 0 so that one token equals one vote (no scaling).
     function decimals() public pure override returns (uint8) {
         return 0;
     }
 
     /// @notice Mint `amount` vote tokens to `to`.
-    /// @dev Signature matches the existing Kaia MSP ABI. Restricted to MINTER_ROLE.
+    /// @dev Restricted to MINTER_ROLE.
     /// @param to Recipient of the newly minted tokens.
     /// @param amount Number of tokens to mint (raw integer, no scaling).
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
