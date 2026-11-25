@@ -1,197 +1,352 @@
-# MyStarPick Contracts — MSP Voting Token (GIWA)
+# MyStarPick Contracts
 
-Smart contracts for **MyStarPick**'s on-chain voting token (**MSP**) on the
-[GIWA](https://giwa.io) chain. This repository is the public submission for the
-GASOK Phase 2 review.
+[![CI](https://github.com/mystarpick/mystarpick-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/mystarpick/mystarpick-contracts/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-MSP is a minimal ERC-20 whose balance represents raw vote counts. Its metadata is
-fixed by the vote-processing backend: `name = "MyStarPick"`, `symbol = "MSP"`, and
-**`decimals = 0`** (one token = one vote, no scaling).
+> **Reviewing this for GASOK?** Go straight to
+> [Check it yourself in one minute](#check-it-yourself-in-one-minute).
+> You only need a browser.
 
-## Architecture
+## What this is
 
-Voting is settled in **two transactions**, with the voter paying **no gas**:
+[MyStarPick](https://mystarpick.io) is an online voting service for real contests:
+pageants, auditions, awards, festivals and TV shows. Fans vote in one tap on a normal
+web page or app. They need no wallet and pay no fee.
 
-```
-                        +----------------------------------------------+
-                        |                MyStarPick backend            |
-                        |            (holds MINTER_ROLE key)           |
-                        +----------------+-----------------------------+
-                                         |
-   tx1: mint(voter, N)                   |  signed & sent by the minter
-   ------------------------------------->|
-                                         v
-                                  +-------------+
-                                  |  MSPToken   |  ERC-20, decimals 0
-                                  +-------------+
-                                         ^
-                                         |  transfer(candidate, N) executed
-                                         |  as msgSender == voter (ERC-2771)
-                                         |
-   tx2: voter signs an EIP-712           |
-        ForwardRequest (off-chain,       |
-        zero gas)                        |
-        |                                |
-        v                                |
-   +-----------+   execute(request)   +--------------------+
-   |  Relayer  | -------------------> | ERC2771Forwarder   |
-   | (pays gas)|                      | "MyStarPick Fwd."  |
-   +-----------+                      +--------------------+
-```
+Every vote is also written to the [GIWA](https://giwa.io) blockchain as it is cast.
+One vote is one token, sent to the candidate's address. This makes the result a public
+record. Anyone can open it, add it up, and compare it with the result the contest
+announced. Once a vote is written, nobody can edit or remove it.
 
-1. **tx1 — mint.** A backend address holding `MINTER_ROLE` mints `N` vote tokens
-   to the voter's address.
-2. **tx2 — gas-sponsored transfer.** The voter signs an EIP-712 `ForwardRequest`
-   off-chain (no gas, no ETH required). A relayer submits it to the
-   `ERC2771Forwarder`, which calls `MSPToken.transfer(candidate, N)` with the
-   voter recovered as `msg.sender` via ERC-2771. The relayer pays the gas.
+This repository holds the smart contracts that do this, with their tests and
+deployment scripts.
 
-### Contracts
+## At a glance
 
-| Contract           | Source                        | Notes                                                             |
-| ------------------ | ----------------------------- | ----------------------------------------------------------------- |
-| `MSPToken`         | `src/MSPToken.sol`            | ERC-20 + `ERC2771Context` + `AccessControl`; `decimals() == 0`.   |
-| `ERC2771Forwarder` | OpenZeppelin (deployed as-is) | Stock OZ forwarder, deployed with name `"MyStarPick Forwarder"`.  |
+Snapshot from the GIWA Sepolia explorer API on **2026-11-26 03:33 KST**. The service is
+live, so these numbers only go up (votes cast by reviewers are counted too).
 
-`MSPToken` exposes:
+| | |
+| --- | --- |
+| Votes recorded on GIWA | **439,683** (the MSP total supply, 1 token = 1 vote) |
+| Vote transactions | **92,585** |
+| Distinct voters | **24,048** (from the service records) |
+| Real contests recorded | **18 contests** from 6 events, July to October 2026 |
+| Site count vs chain count | **99.997%** of votes match, checked for all 392 candidates ([details](#3-recount-a-real-contest)) |
+| Network | GIWA Sepolia, chain id 91342 |
+| Contracts | 3 deployed, all source verified on the explorer |
+| Tests | 28 passing (`forge test`) |
+| License | MIT |
 
-- `mint(address to, uint256 amount)` — restricted to `MINTER_ROLE`.
-- `mintAndRoute(address user, address candidate, uint256 amount)` — mints to the voter
-  and routes to the candidate in a single transaction; restricted to `MINTER_ROLE`.
-- Standard ERC-20 `transfer` / `approve` / `transferFrom`.
-- `AccessControl` role management under `DEFAULT_ADMIN_ROLE`.
+Real contests recorded on GIWA so far:
 
-There is intentionally **no** burn, pause, or upgradeability — the token is kept
-minimal.
+| Event | Voting period (2026) | Candidates |
+| --- | --- | --- |
+| [70th Miss Korea Pageant](https://mystarpick.io/2026MissKorea) | Aug 8 to Aug 22 | 26 |
+| [Mister International Korea](https://mystarpick.io/2026MIK) | Aug 12 to Aug 31 | 31 |
+| Best Model of Universe (13 divisions, for example [Over Ladies](https://mystarpick.io/2026BMUOverLadies)) | Jul 30 to Aug 31 | 274 |
+| [Woman of the Universe](https://mystarpick.io/2026WOTU) | Sep 21 to Oct 8 | 26 |
+| [Super Influencer Awards and Miss Tourism International Korea](https://mystarpick.io/2026Super) | Oct 11 to Oct 19 | 18 |
+| [Supermodel International](https://mystarpick.io/2026SMI) | Oct 16 to Oct 24 | 17 |
 
-## Requirements
+## Check it yourself in one minute
 
-- [Foundry](https://book.getfoundry.sh/) (`forge`, `cast`).
+### 1. See every vote
 
-## Install
+Open the vote token on the GIWA explorer:
 
-Dependencies (OpenZeppelin v5, forge-std) are git submodules, so clone
-recursively:
+<https://sepolia-explorer.giwa.io/token/0x62129f2b2B9337fa676b5B01a75de40C91221616>
 
-```bash
-git clone --recurse-submodules <this-repo-url>
-cd mystarpick-contracts
-```
+- **Max total supply** is the number of votes recorded.
+- The **Token transfers** tab lists every vote, newest first.
+- The **Holders** tab is a live ranking. Each holder is a candidate, and the balance
+  is the number of votes that candidate received.
 
-If you already cloned without `--recurse-submodules`, pull them in:
+### 2. Open one real vote
 
-```bash
-git submodule update --init --recursive
-```
+This is one fan vote from the 70th Miss Korea Pageant (August 2026, 31 votes):
 
-## Build
+<https://sepolia-explorer.giwa.io/tx/0xa6a1c6fc80c7eadc9947af183af18df0270d35c685699b49f2585079e1b0f520>
 
-```bash
-forge build
-```
+It is a single transaction with two token transfers: the votes are created for the
+voter, then moved from the voter to the candidate.
 
-## Test
+### 3. Recount a real contest
+
+The claim "anyone can check the result" is easy to test. Mister International Korea
+shows its final fan vote counts on [its contest page](https://mystarpick.io/2026MIK).
+Compare them with the token balances on GIWA:
+
+| Candidate | Votes shown on mystarpick.io | Balance on GIWA |
+| --- | ---: | ---: |
+| Jeongchan Lee | 17,702 | [17,702](https://sepolia-explorer.giwa.io/address/0x30303fE83591b9A5143cE56a23aB841733610B86?tab=tokens) |
+| Junggyu Park | 16,389 | [16,389](https://sepolia-explorer.giwa.io/address/0x3708d467c113c555c679aa7438e05feA2a866601?tab=tokens) |
+| Sangmin Shin | 16,347 | [16,347](https://sepolia-explorer.giwa.io/address/0xe832AE66Cdd85B51AE2459CB7fc40E5F4fE6315a?tab=tokens) |
+| Woohyuk Kim | 13,011 | [13,011](https://sepolia-explorer.giwa.io/address/0x6B91369578d4B9637bc356471d773D954c3ED4ae?tab=tokens) |
+| Myeongcheol Jung | 12,577 | [12,577](https://sepolia-explorer.giwa.io/address/0xDD85437b750077293d536eFEE6508fC9FA668DEE?tab=tokens) |
+| Isu Jeon | 11,715 | [11,715](https://sepolia-explorer.giwa.io/address/0x61dFed3c0F81f1f6E19Af1a3bC2eB6010682D713?tab=tokens) |
+
+You can read a balance without the explorer too:
 
 ```bash
-forge test -vv
+cast call 0x62129f2b2B9337fa676b5B01a75de40C91221616 \
+  "balanceOf(address)(uint256)" 0x30303fE83591b9A5143cE56a23aB841733610B86 \
+  --rpc-url https://sepolia-rpc.giwa.io
+# 17702
 ```
 
-The suite covers metadata, role-gated minting, plain transfers, and the full
-ERC-2771 meta-transaction flow — including a gasless voter (0 ETH), replay
-protection, invalid-signature rejection, and expired-deadline rejection.
+We ran this comparison for **every candidate of all 18 real contests** on 2026-11-26:
 
-## Deploy (GIWA Sepolia)
+- 392 candidates checked. 385 match exactly.
+- 434,455 of the 434,467 votes shown on the site are on GIWA (**99.997%**).
+- The other 12 votes belong to 7 candidates. All of them are in contests that were
+  open during the [August queue stall](#operations-note-the-august-2026-queue-stall).
 
-GIWA Sepolia — chain id **91342**, RPC `https://sepolia-rpc.giwa.io`, explorer
-`https://sepolia-explorer.giwa.io`.
+(The rest of the total supply belongs to the demo and test contests.)
 
-1. Copy the env template and fill it in (never commit `.env`):
+### 4. Cast a vote yourself
 
-   ```bash
-   cp .env.example .env
-   # edit .env: DEPLOYER_KEY, optional ADMIN_ADDRESS / MINTER_ADDRESS
-   ```
+We keep a demo contest open for reviewers until 2026-12-31:
 
-2. Deploy the forwarder and token, then verify on Blockscout:
+**<https://mystarpick.io/VNDEMO>** (change the language with the button at the top right)
 
-   ```bash
-   source .env
-   forge script script/Deploy.s.sol:Deploy \
-     --rpc-url giwa_sepolia \
-     --private-key "$DEPLOYER_KEY" \
-     --broadcast \
-     --verify \
-     --verifier blockscout \
-     --verifier-url https://sepolia-explorer.giwa.io/api
-   ```
+Demo accounts, ready to use:
 
-   If `ADMIN_ADDRESS` / `MINTER_ADDRESS` are unset, the deployer receives both
-   `DEFAULT_ADMIN_ROLE` and `MINTER_ROLE`.
+| Email | Password |
+| --- | --- |
+| `giwa-judge01@mystarpick.io` to `giwa-judge10@mystarpick.io` | `GiwaJudge2026!` |
+
+1. Press **Sign In** and use one of the demo accounts.
+2. Open any candidate and press **Vote**. Choose 1 to 3 votes and press **Vote** again.
+   You will see "Voting details have been safely stored on the blockchain."
+3. Press **View voting history** on the candidate page, or open **My Page** and then
+   **Voting History**. Click the **TXID** of your vote.
+4. The GIWA explorer opens and shows your vote as a transaction.
+
+Each account gets 3 free votes a day. If an account has none left, use another one.
+You can also make your own account with an email address. No phone check is needed.
+
+The demo contest holds sample data for product demos, so use a real contest
+([step 3](#3-recount-a-real-contest)) when you compare site counts with chain counts.
+
+## How a vote is recorded
+
+```mermaid
+sequenceDiagram
+    actor Fan
+    participant App as MyStarPick app and server
+    participant Token as MSPToken on GIWA
+    Fan->>App: Tap "Vote" (no wallet, no fee)
+    App->>App: Check sign-in and vote limits
+    App->>Token: mintAndRoute(voter, candidate, amount)
+    Note over Token: One transaction<br/>Transfer(0x0 to voter, amount)<br/>Transfer(voter to candidate, amount)
+    Token-->>App: Transaction hash
+    App-->>Fan: "Stored on the blockchain" with a link to the transaction
+```
+
+- Each fan and each candidate has an address on GIWA. The service creates it for them.
+  A candidate address can only receive votes.
+- The server holds the only key that may write votes (`MINTER_ROLE`). It calls
+  `mintAndRoute` once per vote and pays the gas. The fan pays nothing.
+- `MSP` has `decimals = 0`, so the numbers on chain are plain vote counts.
+- A candidate's balance is the number of votes that candidate received.
+- One vote costs about 50,000 to 77,000 gas.
+
+The first version (v1) used two transactions per vote: a mint, then a transfer signed
+by the fan and relayed through an ERC-2771 forwarder. Version 2 added `mintAndRoute`,
+which does both steps in one transaction and keeps the same two `Transfer` events.
+This halved the transactions and the gas per vote. All real contests ran on v2.
+
+## Contracts
+
+| Contract | Source | What it does |
+| --- | --- | --- |
+| `MSPToken` | [`src/MSPToken.sol`](./src/MSPToken.sol) | The vote record. ERC-20 with `decimals = 0`. Only `MINTER_ROLE` can create votes. `mintAndRoute` records one vote in one transaction. |
+| `VotingRightsGateway` | [`src/VotingRightsGateway.sol`](./src/VotingRightsGateway.sol) | Wallet payment for paid votes. A fan pays from their own wallet. The gateway passes the payment straight to the treasury and records which order was paid. |
+| `ERC2771Forwarder` | OpenZeppelin v5, unchanged | Lets a relayer pay gas for a transfer that a fan signed. Used by the v1 flow. Still trusted by the token. |
+
+All contracts are built on OpenZeppelin Contracts v5.6.1.
 
 ## Deployed addresses
 
-| Network      | Contract           | Address |
-| ------------ | ------------------ | ------- |
-| GIWA Sepolia | `MSPToken` (v2, current) | [`0x62129f2b2B9337fa676b5B01a75de40C91221616`](https://sepolia-explorer.giwa.io/address/0x62129f2b2B9337fa676b5B01a75de40C91221616) |
-| GIWA Sepolia | `ERC2771Forwarder` | [`0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2`](https://sepolia-explorer.giwa.io/address/0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2) |
-| GIWA Sepolia | `MSPToken` (v1) | [`0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f`](https://sepolia-explorer.giwa.io/address/0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f) |
+GIWA Sepolia, chain id **91342**. RPC `https://sepolia-rpc.giwa.io`. Explorer
+`https://sepolia-explorer.giwa.io`.
 
-All contracts are source-verified on Blockscout.
+| Contract | Address | Source verified |
+| --- | --- | --- |
+| `MSPToken` v2 (in use) | [`0x62129f2b2B9337fa676b5B01a75de40C91221616`](https://sepolia-explorer.giwa.io/address/0x62129f2b2B9337fa676b5B01a75de40C91221616) | Yes |
+| `VotingRightsGateway` | [`0x100Df5a4835a6e63a2E095AC8F99743a89f97e67`](https://sepolia-explorer.giwa.io/address/0x100Df5a4835a6e63a2E095AC8F99743a89f97e67) | Yes |
+| `ERC2771Forwarder` | [`0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2`](https://sepolia-explorer.giwa.io/address/0x5bFAd9AE715877e550ED9b1Eb64A62BCc90504c2) | Yes |
+| Test payment token (`GTT`) | [`0x307eFc47664f47d68C6D5867D99c30bb032d2E79`](https://sepolia-explorer.giwa.io/address/0x307eFc47664f47d68C6D5867D99c30bb032d2E79) | Yes |
+| `MSPToken` v1 (retired) | [`0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f`](https://sepolia-explorer.giwa.io/address/0x3E8a08C753678E074a29384D0F8C4F8d08A00f4f) | Yes |
 
-**v2 (tag [`giwa-sepolia-v2`](../../releases/tag/giwa-sepolia-v2)) — current vote token.** Adds
-`mintAndRoute(user, candidate, amount)` (MINTER_ROLE only), which mints to the voter and routes
-to the candidate **in a single transaction** — no user signature, no forwarder round-trip. It
-halves the vote path (2 txs → 1) and gas, while preserving the same two `Transfer` events
-(`0x0 → user`, `user → candidate`) so the on-chain vote trail is identical. Example single-tx vote:
-[`0x2b70b87e…84b6`](https://sepolia-explorer.giwa.io/tx/0x2b70b87e7e349ed4b3a9ac0dadf416758d71e6cf08593f66e9b23a32e04884b6)
-(one transaction containing both the mint and the route).
+The source shown on the explorer is the same, character for character, as the files
+under the tag
+[`giwa-sepolia-v2`](https://github.com/mystarpick/mystarpick-contracts/tree/giwa-sepolia-v2)
+(and [`giwa-sepolia-v1`](https://github.com/mystarpick/mystarpick-contracts/tree/giwa-sepolia-v1)
+for the retired token). On the `main` branch only comments have changed since then.
+You can confirm that no logic changed:
 
-The v1 contracts (tag [`giwa-sepolia-v1`](../../releases/tag/giwa-sepolia-v1)) remain deployed for
-reference; they used a two-transaction flow (mint + gas-sponsored ERC-2771 transfer). Example: 
+```bash
+git diff giwa-sepolia-v2 main -- src/
+```
 
-- tx1 (mint, paid by minter): [`0x822ceeba...658ff`](https://sepolia-explorer.giwa.io/tx/0x822ceebab3f8c2eee39fd50e6e3717061a166779d745b522c71725e1fbe658ff)
-- tx2 (gas-sponsored transfer, voter holds zero ETH): [`0xa0d981a3...2f443`](https://sepolia-explorer.giwa.io/tx/0xa0d981a34a083cc403305d79e207af5b89a3e74e67724c9a780f51f78aa2f443)
+## Wallet payment (VotingRightsGateway)
 
-> The testnet contracts above were deployed from tag
-> [`giwa-sepolia-v1`](../../releases/tag/giwa-sepolia-v1), so their verified
-> Blockscout source matches that tag exactly. Commits after it add
-> constructor zero-address guards (`MSPTokenZeroMinter` / `MSPTokenZeroForwarder`),
-> which only harden the *next* deployment — they do not change the runtime
-> behaviour of the already-deployed testnet token. The mainnet deployment will use
-> the current `main`.
+Today fans buy extra votes by card. `VotingRightsGateway` adds a second way: a fan pays
+with a stablecoin from their own wallet, such as GIWA Wallet.
+
+- **The fan keeps control.** The fan signs the payment in their own wallet. The gateway
+  sends it to the treasury in the same transaction and keeps nothing.
+- **One payment per order.** Each payment carries an order reference. The same
+  reference cannot be paid twice, so nobody is charged or credited twice.
+- **Only approved tokens.** The owner keeps a list of accepted tokens.
+- **Emergency stop.** The owner can pause new payments.
+
+What is done and what is not:
+
+| Item | Status |
+| --- | --- |
+| Contract deployed and source verified on GIWA Sepolia | Done |
+| 13 tests for payment, duplicate orders, token list, pause and owner rights | Done |
+| Real payments on GIWA Sepolia (below) | Done |
+| Server check that turns a confirmed payment into votes | Built, tested against the two payments below |
+| "Pay with wallet" button in the live app | Not yet. It opens with GIWA Wallet and a real stablecoin |
+
+Payments made through the gateway on GIWA Sepolia:
+
+- Token payment (100 `GTT`, a test token):
+  [`0xc4ef825e...c1f63b`](https://sepolia-explorer.giwa.io/tx/0xc4ef825e432d6d806b6af7ed7554b52de15a619e76dacd7efe4a0fed59c1f63b)
+- Native currency payment:
+  [`0x72acd538...25fc90`](https://sepolia-explorer.giwa.io/tx/0x72acd53839d33a1856d893f7039e3fd0f1574d42bc931403b30af2422225fc90)
+
+The full design is in [docs/WALLET_PAYMENT.md](./docs/WALLET_PAYMENT.md).
+
+## Build and test
+
+You need [Foundry](https://book.getfoundry.sh/). The libraries are git submodules, so
+clone with them:
+
+```bash
+git clone --recurse-submodules https://github.com/mystarpick/mystarpick-contracts.git
+cd mystarpick-contracts
+forge build
+forge test -vv
+```
+
+If you cloned without submodules, run `git submodule update --init --recursive`.
+
+The 28 tests cover:
+
+- `MSPToken` (15): name, symbol and decimals, minting by the minter only,
+  `mintAndRoute` with both events, zero address checks, plain transfers, and the
+  signed transfer flow with a voter who holds no gas, including replay, bad signature
+  and expired deadline.
+- `VotingRightsGateway` (13): token and native payments, duplicate order rejection,
+  tokens that are not accepted, zero amounts, pause, and owner only settings.
+
+The same build and tests run on every push in
+[GitHub Actions](https://github.com/mystarpick/mystarpick-contracts/actions/workflows/ci.yml).
+
+## Deploy
+
+```bash
+cp .env.example .env      # fill in DEPLOYER_KEY, never commit .env
+source .env
+
+# Forwarder and vote token
+forge script script/Deploy.s.sol:Deploy \
+  --rpc-url giwa_sepolia --private-key "$DEPLOYER_KEY" \
+  --broadcast --verify --verifier blockscout \
+  --verifier-url https://sepolia-explorer.giwa.io/api
+
+# Payment gateway
+forge script script/DeployGateway.s.sol:DeployGateway \
+  --rpc-url giwa_sepolia --private-key "$DEPLOYER_KEY" \
+  --broadcast --verify --verifier blockscout \
+  --verifier-url https://sepolia-explorer.giwa.io/api
+```
+
+`ADMIN_ADDRESS`, `MINTER_ADDRESS` and `TREASURY_ADDRESS` are optional. If they are not
+set, the deployer gets those roles. The scripts stop before sending anything if a role
+is set to the zero address.
+
+## Versions
+
+| Tag | What changed |
+| --- | --- |
+| [`giwa-sepolia-v1`](https://github.com/mystarpick/mystarpick-contracts/tree/giwa-sepolia-v1) | First deployment. Two transactions per vote (mint, then a relayed transfer signed by the fan). |
+| [`giwa-sepolia-v2`](https://github.com/mystarpick/mystarpick-contracts/tree/giwa-sepolia-v2) | `mintAndRoute`: one transaction per vote. Adds `VotingRightsGateway`. This is the version in use. |
 
 ## Trust model
 
-MSP is intentionally minimal, so its integrity rests on a small set of explicit
-trust assumptions rather than on-chain safeguards:
+We want reviewers to know exactly what the chain proves and what it does not.
 
-- **The minter key is the single trust anchor for issuance.** `mint` has no supply
-  cap (by design — one token per vote, minted by the backend). Whoever holds
-  `MINTER_ROLE` can issue unlimited vote tokens, so that key is the integrity of
-  the entire voting system. There is no on-chain limit; security depends entirely
-  on how the minter key is managed off-chain.
-- **There is no burn, pause, or upgrade — and thus no on-chain emergency stop.**
-  The only incident-response lever is the admin revoking `MINTER_ROLE` (e.g. if a
-  minter key leaks) and rotating to a fresh minter. Document this procedure in your
-  operational runbook: `admin.revokeRole(MINTER_ROLE, compromisedMinter)` →
-  rotate the server signing key → `admin.grantRole(MINTER_ROLE, newMinter)`.
-- **Recommended production posture:** hold `DEFAULT_ADMIN_ROLE` in a **multisig**
-  (e.g. a Safe), keep `MINTER_ROLE` on a separate server-side signing address, and
-  after deployment transfer admin to the multisig and have the deployer EOA
-  `renounceRole(DEFAULT_ADMIN_ROLE, deployer)`. This removes the deployer hot key
-  as a single point of failure.
-- **Testnet starting point:** on GIWA Sepolia the deploy defaults to
-  `deployer == admin == minter` (a single EOA) for convenience. This is acceptable
-  for testing only — do **not** carry that configuration to a production
-  deployment; split the roles and move admin to a multisig first.
+**What the chain proves**
 
-## Security notes
+- Every recorded vote exists, with its time, its amount, the voter address and the
+  candidate address.
+- A candidate's total is the sum of those votes. Anyone can recount it.
+- A recorded vote cannot be edited or deleted. The token has no burn, no pause and no
+  upgrade path.
+- Votes can only be added to a candidate, never taken away. The key of a candidate
+  address is thrown away when the address is created, so nobody can move votes out of
+  it, and that includes us. You can see this on chain: none of the 392 candidate
+  addresses of the real contests has ever sent a transaction.
 
-- `mint` is gated by `MINTER_ROLE`; role administration is gated by
-  `DEFAULT_ADMIN_ROLE`.
-- The forwarder enforces EIP-712 signatures, per-signer nonces (replay
-  protection), and request deadlines.
-- Never commit private keys or a populated `.env`. `.env` is git-ignored.
+**What the chain does not prove**
+
+- It does not prove that a vote came from a unique real person. That is the job of the
+  service (sign-in, vote limits per account, rate limits), not of the contract.
+- Fans do not hold their own keys. The service creates and keeps an address for each
+  fan, and the service writes the vote for them.
+- It does not prove that every vote in the service reached the chain. The
+  [recount](#3-recount-a-real-contest) is how anyone can test that.
+
+**Who holds the power**
+
+- Only the address with `MINTER_ROLE` can write votes, and there is no supply cap. If
+  that key leaked, someone could write false votes. They would be visible to everyone
+  on chain, and the admin would stop them with
+  `revokeRole(MINTER_ROLE, leakedMinter)` and then grant the role to a fresh key.
+- The gateway owner can pause payments, change the treasury and change the token list.
+  The gateway never holds funds, so there is nothing in it to take.
+
+**Testnet today, mainnet later**
+
+- On GIWA Sepolia one address
+  ([`0x64bf...c7F4`](https://sepolia-explorer.giwa.io/address/0x64bf0096a9489AbFc826452Ff18DDE7bdd2Ac7F4))
+  is the deployer, token admin, minter, gateway owner and treasury. This is simple and
+  fine for a testnet. It is not how we will run on mainnet.
+- On mainnet the token admin, the gateway owner and the treasury will be a multisig.
+  The minter will be a separate server key that can be revoked at any time.
+
+## Operations note: the August 2026 queue stall
+
+From 2026-08-26 to 2026-09-03 our transaction queue stopped. One call to the RPC never
+returned, and everything behind it waited. Votes were still counted in the service, but
+they were not written to GIWA during those days.
+
+On 2026-09-03 and 2026-09-04 we wrote the waiting votes to GIWA, about 17,400
+transactions. This is why some votes of contests that closed on 2026-08-31 carry a
+September date on the explorer. The totals are the same as the contest results (see
+the [recount](#3-recount-a-real-contest)).
+
+What we changed afterwards:
+
+- Every RPC call and every queue item now has a time limit, so one slow call cannot
+  block the queue.
+- An alarm fires when the queue stops moving or when a write fails.
+- A timed out write is never sent again blindly, so a vote cannot be written twice.
+
+## Roadmap
+
+- **GIWA mainnet launch.** Deploy the vote token and the gateway to mainnet from `main`
+  on launch day, with a multisig admin and a separate minter key.
+- **Stablecoin voting in GIWA Wallet (first half of 2027).** Fans pay for votes with a
+  stablecoin from GIWA Wallet through `VotingRightsGateway`.
+- **More contests on GIWA (second half of 2027).** 15 or more contests outside Korea
+  recorded on GIWA.
 
 ## License
 
