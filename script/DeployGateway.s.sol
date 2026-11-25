@@ -11,7 +11,7 @@ import {VotingRightsGateway} from "../src/VotingRightsGateway.sol";
 ///      environment variable; when unset, the deployer address is used.
 ///
 ///      Token whitelisting (setAcceptedToken) and native acceptance (setNativeAccepted) are NOT
-///      done here — they are separate owner transactions run from the demo script after deploy,
+///      done here. They are separate owner transactions sent after deploy,
 ///      so the gateway ships in a locked-down default (no token accepted, native off).
 ///
 ///      Run with:
@@ -43,7 +43,7 @@ contract DeployGateway is Script {
 
     /// @dev Resolves an address parameter from the environment.
     ///      - If `key` is set, it is parsed with `vm.envAddress`, which reverts on a malformed
-    ///        value instead of silently falling back — so a typo'd/truncated address aborts the
+    ///        value instead of silently falling back, so a typo'd/truncated address aborts the
     ///        deployment rather than quietly handing the treasury role to the deployer EOA.
     ///      - Only when `key` is entirely unset does the fallback address get used.
     function _envAddressOr(string memory key, address fallbackAddr) internal view returns (address) {

@@ -9,7 +9,7 @@ import {MSPToken} from "../src/MSPToken.sol";
 /// @title Deploy
 /// @notice Deploys the ERC-2771 forwarder and the MSP voting token to the GIWA chain.
 /// @dev Deployment order:
-///        1. ERC2771Forwarder("MyStarPick Forwarder") — OpenZeppelin's stock forwarder.
+///        1. ERC2771Forwarder("MyStarPick Forwarder"), OpenZeppelin's stock forwarder.
 ///        2. MSPToken(forwarder, admin, minter).
 ///      The admin and minter addresses are read from the ADMIN_ADDRESS and MINTER_ADDRESS
 ///      environment variables. When either is unset (address(0)), the deployer address is used.
@@ -48,7 +48,7 @@ contract Deploy is Script {
 
     /// @dev Resolves an address role parameter from the environment.
     ///      - If `key` is set, it is parsed with `vm.envAddress`, which reverts on a malformed
-    ///        value instead of silently falling back — so a typo'd/truncated address aborts the
+    ///        value instead of silently falling back, so a typo'd/truncated address aborts the
     ///        deployment rather than quietly handing the role to the deployer EOA.
     ///      - Only when `key` is entirely unset does the deployer address get used.
     function _envAddressOr(string memory key, address fallbackAddr) internal view returns (address) {

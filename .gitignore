@@ -5,7 +5,7 @@ cache/
 # Broadcast logs (contain deployment tx data; regenerated per run)
 broadcast/
 
-# Environment / secrets — never commit real keys
+# Environment / secrets: never commit real keys
 .env
 .env.*
 !.env.example

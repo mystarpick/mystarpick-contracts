@@ -17,7 +17,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 ///      transfers when needed.
 ///
 ///      Only ERC-20 transfer/mint and role-gated minting are supported. No burn, pause, or
-///      upgradeability by design — the token is intentionally minimal.
+///      upgradeability by design: the token is intentionally minimal.
 contract MSPToken is ERC20, ERC2771Context, AccessControl {
     /// @notice Role allowed to mint new vote tokens.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");

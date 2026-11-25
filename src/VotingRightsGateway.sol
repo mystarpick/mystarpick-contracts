@@ -9,9 +9,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /// @title VotingRightsGateway
 /// @notice Self-custody payment gateway for paid voting-rights purchases on the GIWA chain.
-/// @dev PoC/demo contract (GASOK application, GIWA Sepolia testnet). Records the fact of a
-///      payment on-chain and immediately forwards the funds to `treasury` — the contract never
-///      takes custody (post-transfer balance is always zero, forward-only).
+/// @dev Records the fact of a payment on-chain and immediately forwards the funds to
+///      `treasury`. The contract never takes custody (post-transfer balance is always zero,
+///      forward-only).
 ///
 ///      The contract holds NO price or exchange-rate logic. It records only
 ///      (buyer, token, amount, orderRef); the credit/vote amount is pre-determined off-chain by

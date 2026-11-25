@@ -17,7 +17,7 @@ tab_width = 4
 bracket_spacing = false
 int_types = "long"
 
-# GIWA Sepolia testnet — chain id 91342
+# GIWA Sepolia testnet, chain id 91342
 [rpc_endpoints]
 giwa_sepolia = "https://sepolia-rpc.giwa.io"
 

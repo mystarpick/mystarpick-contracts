@@ -144,7 +144,7 @@ contract MSPTokenTest is Test {
         vm.prank(minter);
         token.mint(voter.addr, 7);
 
-        // The voter has no ETH — the relayer sponsors gas.
+        // The voter has no ETH: the relayer sponsors gas.
         assertEq(voter.addr.balance, 0);
 
         bytes memory data = abi.encodeCall(token.transfer, (candidate, 7));
