@@ -121,8 +121,9 @@ remain before fans can use it:
 1. **A real stablecoin on GIWA mainnet.** We add it to the accepted list. A stablecoin
    has a steady price, so a pack of votes costs a fixed number of tokens and no price
    feed is needed.
-2. **GIWA Wallet connection in the app.** A "Pay with wallet" button on the purchase
-   screen opens GIWA Wallet with the amount and the order reference filled in.
+2. **GIWA Wallet connection in the app.** The "Pay with GIWA Wallet" button is already
+   on the purchase screen of the demo contest, where it opens a "coming soon" notice.
+   Next it will open GIWA Wallet with the amount and the order reference filled in.
 3. **Exact amount check.** The server compares the token and the amount of each
    payment with the price of the order before it issues votes.
 4. **Mainnet deployment.** The gateway is deployed with a multisig as owner and as

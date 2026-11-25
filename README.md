@@ -120,6 +120,11 @@ Demo accounts, ready to use:
 Each account gets 3 free votes a day. If an account has none left, use another one.
 You can also make your own account with an email address. No phone check is needed.
 
+To see where wallet payment will appear, press **Vote** on a candidate page and then
+**Buy picks**. The **Pay with GIWA Wallet** button is under **Pay**. For now it opens a
+"coming soon" notice and no payment is made (see
+[Wallet payment](#wallet-payment-votingrightsgateway)).
+
 The demo contest holds sample data for product demos, so use a real contest
 ([step 3](#3-recount-a-real-contest)) when you compare site counts with chain counts.
 
@@ -205,7 +210,7 @@ What is done and what is not:
 | 13 tests for payment, duplicate orders, token list, pause and owner rights | Done |
 | Real payments on GIWA Sepolia (below) | Done |
 | Server check that turns a confirmed payment into votes | Built, tested against the two payments below |
-| "Pay with wallet" button in the live app | Not yet. It opens with GIWA Wallet and a real stablecoin |
+| "Pay with GIWA Wallet" button in the app | Shown in the demo contest. For now it opens a "coming soon" notice. Real payment opens with GIWA Wallet and a real stablecoin |
 
 Payments made through the gateway on GIWA Sepolia:
 
