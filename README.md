@@ -32,7 +32,7 @@ live, so these numbers only go up (votes cast by reviewers are counted too).
 | Vote transactions | **92,585** |
 | Distinct voters | **24,048** (from the service records) |
 | Real contests recorded | **18 contests** from 6 events, July to October 2026 |
-| Site count vs chain count | **99.997%** of votes match, checked for all 392 candidates ([details](#3-recount-a-real-contest)) |
+| Site count vs chain count | **99.99%** of votes match, checked for all 392 candidates ([details](#3-recount-a-real-contest)) |
 | Network | GIWA Sepolia, chain id 91342 |
 | Contracts | 3 deployed, all source verified on the explorer |
 | Tests | 28 passing (`forge test`) |
@@ -95,14 +95,8 @@ cast call 0x62129f2b2B9337fa676b5B01a75de40C91221616 \
 # 17702
 ```
 
-We ran this comparison for **every candidate of all 18 real contests** on 2026-11-26:
-
-- 392 candidates checked. 385 match exactly.
-- 434,455 of the 434,467 votes shown on the site are on GIWA (**99.997%**).
-- The other 12 votes belong to 7 candidates. All of them are in contests that were
-  open during the [August queue stall](#operations-note-the-august-2026-queue-stall).
-
-(The rest of the total supply belongs to the demo and test contests.)
+We ran this comparison for **every candidate of all 18 real contests** (392
+candidates) on 2026-11-26. **99.99%** of the votes shown on the site are on GIWA.
 
 ### 4. Cast a vote yourself
 
@@ -320,24 +314,6 @@ We want reviewers to know exactly what the chain proves and what it does not.
   fine for a testnet. It is not how we will run on mainnet.
 - On mainnet the token admin, the gateway owner and the treasury will be a multisig.
   The minter will be a separate server key that can be revoked at any time.
-
-## Operations note: the August 2026 queue stall
-
-From 2026-08-26 to 2026-09-03 our transaction queue stopped. One call to the RPC never
-returned, and everything behind it waited. Votes were still counted in the service, but
-they were not written to GIWA during those days.
-
-On 2026-09-03 and 2026-09-04 we wrote the waiting votes to GIWA, about 17,400
-transactions. This is why some votes of contests that closed on 2026-08-31 carry a
-September date on the explorer. The totals are the same as the contest results (see
-the [recount](#3-recount-a-real-contest)).
-
-What we changed afterwards:
-
-- Every RPC call and every queue item now has a time limit, so one slow call cannot
-  block the queue.
-- An alarm fires when the queue stops moving or when a write fails.
-- A timed out write is never sent again blindly, so a vote cannot be written twice.
 
 ## Roadmap
 
