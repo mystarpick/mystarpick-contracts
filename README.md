@@ -104,21 +104,16 @@ We keep a demo contest open for reviewers until 2026-12-31:
 
 **<https://mystarpick.io/VNDEMO>** (change the language with the button at the top right)
 
-Demo accounts, ready to use:
-
-| Email | Password |
-| --- | --- |
-| `giwa-judge01@mystarpick.io` to `giwa-judge10@mystarpick.io` | `GiwaJudge2026!` |
-
-1. Press **Sign In** and use one of the demo accounts.
+1. Press **Sign In** and use one of the demo accounts listed in our application.
 2. Open any candidate and press **Vote**. Choose 1 to 3 votes and press **Vote** again.
    You will see "Voting details have been safely stored on the blockchain."
 3. Press **View voting history** on the candidate page, or open **My Page** and then
    **Voting History**. Click the **TXID** of your vote.
 4. The GIWA explorer opens and shows your vote as a transaction.
 
-Each account gets 3 free votes a day. If an account has none left, use another one.
-You can also make your own account with an email address. No phone check is needed.
+Each demo account gets 3 free votes a day. If an account has none left, use another
+one. You can also make your own account with an email address. No phone check is
+needed.
 
 To see where wallet payment will appear, press **Vote** on a candidate page and then
 **Buy picks**. The **Pay with GIWA Wallet** button is under **Pay**. For now it opens a
