@@ -118,9 +118,11 @@ needed.
 You can also pay for votes with a wallet on the testnet. Press **Vote** on a candidate
 page and then **Buy picks**. Choose a package, select the **GIWA Wallet** tile in the
 last cell, and press **Pay with GIWA Wallet**. You need a browser wallet such as
-MetaMask and a little GIWA Sepolia test ETH for gas. The test token (`GTT`) is given to
-you inside the flow, and no real money is used. See
-[Wallet payment](#wallet-payment-votingrightsgateway).
+MetaMask and a little GIWA Sepolia test ETH for gas (see the
+[GIWA faucet](https://faucet.giwa.io/)). The test token (`GTT`) is given to you inside
+the flow, and no real money is used. After the payment is confirmed, the votes you
+bought are cast for that candidate automatically, together with any free votes the
+account has left. See [Wallet payment](#wallet-payment-votingrightsgateway).
 
 The demo contest holds sample data for product demos, so use a real contest
 ([step 3](#3-recount-a-real-contest)) when you compare site counts with chain counts.
@@ -207,7 +209,7 @@ What is done and what is not:
 | 13 tests for payment, duplicate orders, token list, pause and owner rights | Done |
 | Real payments on GIWA Sepolia (below) | Done |
 | Server check that turns a confirmed payment into votes | Live in the demo contest. It checks the token, the exact amount and the order reference before any vote is issued |
-| Wallet payment in the app | Live in the demo contest, on the testnet. It works today with a standard browser wallet such as MetaMask |
+| Wallet payment in the app | Live in the demo contest, on the testnet. It uses the standard browser wallet interface (EIP-1193) that wallets such as MetaMask provide. We ran it end to end with test keys on PC and mobile layouts |
 | GIWA Wallet app | Not released yet. It will connect through the same wallet standard, with no change to the contract |
 | Real stablecoin on GIWA mainnet | Not yet. The demo uses the test token `GTT`, which has no value |
 

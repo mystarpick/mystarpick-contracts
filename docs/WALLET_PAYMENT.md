@@ -102,7 +102,7 @@ On GIWA Sepolia (chain id 91342):
 | Test payment token (`GTT`) | [`0x307eFc47664f47d68C6D5867D99c30bb032d2E79`](https://sepolia-explorer.giwa.io/address/0x307eFc47664f47d68C6D5867D99c30bb032d2E79) | Deployed, source verified |
 | Contract tests | This repository | 13 tests passing |
 | Server check of a payment | MyStarPick service | Live in the demo contest. Checks the gateway, the order reference, the token and the exact amount |
-| Wallet payment in the app | [Demo contest](https://mystarpick.io/VNDEMO) | Live on the testnet with a standard browser wallet such as MetaMask |
+| Wallet payment in the app | [Demo contest](https://mystarpick.io/VNDEMO) | Live on the testnet. It uses the standard browser wallet interface (EIP-1193) that wallets such as MetaMask provide |
 
 Payments made on GIWA Sepolia:
 
