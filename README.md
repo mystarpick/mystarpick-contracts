@@ -115,10 +115,12 @@ Each demo account gets 3 free votes a day. If an account has none left, use anot
 one. You can also make your own account with an email address. No phone check is
 needed.
 
-To see where wallet payment will appear, press **Vote** on a candidate page and then
-**Buy picks**. The **Pay with GIWA Wallet** button is under **Pay**. For now it opens a
-"coming soon" notice and no payment is made (see
-[Wallet payment](#wallet-payment-votingrightsgateway)).
+You can also pay for votes with a wallet on the testnet. Press **Vote** on a candidate
+page and then **Buy picks**. Choose a package, select the **GIWA Wallet** tile in the
+last cell, and press **Pay with GIWA Wallet**. You need a browser wallet such as
+MetaMask and a little GIWA Sepolia test ETH for gas. The test token (`GTT`) is given to
+you inside the flow, and no real money is used. See
+[Wallet payment](#wallet-payment-votingrightsgateway).
 
 The demo contest holds sample data for product demos, so use a real contest
 ([step 3](#3-recount-a-real-contest)) when you compare site counts with chain counts.
@@ -204,11 +206,16 @@ What is done and what is not:
 | Contract deployed and source verified on GIWA Sepolia | Done |
 | 13 tests for payment, duplicate orders, token list, pause and owner rights | Done |
 | Real payments on GIWA Sepolia (below) | Done |
-| Server check that turns a confirmed payment into votes | Built, tested against the two payments below |
-| "Pay with GIWA Wallet" button in the app | Shown in the demo contest. For now it opens a "coming soon" notice. Real payment opens with GIWA Wallet and a real stablecoin |
+| Server check that turns a confirmed payment into votes | Live in the demo contest. It checks the token, the exact amount and the order reference before any vote is issued |
+| Wallet payment in the app | Live in the demo contest, on the testnet. It works today with a standard browser wallet such as MetaMask |
+| GIWA Wallet app | Not released yet. It will connect through the same wallet standard, with no change to the contract |
+| Real stablecoin on GIWA mainnet | Not yet. The demo uses the test token `GTT`, which has no value |
 
 Payments made through the gateway on GIWA Sepolia:
 
+- Payment made in the live app (2 `GTT` for a pack of 10 votes, 2026-11-26). The votes
+  were issued and cast right after it:
+  [`0xde9bba16...245f30`](https://sepolia-explorer.giwa.io/tx/0xde9bba162274156d2b72b0dc9b69a13e9617de0630e9994b8ef5f1204c245f30)
 - Token payment (100 `GTT`, a test token):
   [`0xc4ef825e...c1f63b`](https://sepolia-explorer.giwa.io/tx/0xc4ef825e432d6d806b6af7ed7554b52de15a619e76dacd7efe4a0fed59c1f63b)
 - Native currency payment:

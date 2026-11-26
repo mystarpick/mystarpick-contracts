@@ -57,10 +57,12 @@ sequenceDiagram
 ```
 
 The service does not trust the app or the wallet to say that a payment happened. It
-reads the transaction from GIWA itself. Today it checks that the transaction succeeded,
-that the payment event came from the gateway, and that the order reference matches the
-order. Only then does it issue the votes. Before launch it will also compare the token
-and the exact amount with the price of the order (see [What is left](#what-is-left)).
+reads the transaction from GIWA itself. It checks that the transaction succeeded, that
+the payment event came from our gateway, and that the order reference, the token and
+the exact amount all match the order. Only then does it issue the votes.
+
+The order reference is a value only the service can produce for an order, so nobody
+can guess a future reference and use it up in advance.
 
 ## The contract
 
@@ -99,10 +101,14 @@ On GIWA Sepolia (chain id 91342):
 | `VotingRightsGateway` | [`0x100Df5a4835a6e63a2E095AC8F99743a89f97e67`](https://sepolia-explorer.giwa.io/address/0x100Df5a4835a6e63a2E095AC8F99743a89f97e67) | Deployed, source verified |
 | Test payment token (`GTT`) | [`0x307eFc47664f47d68C6D5867D99c30bb032d2E79`](https://sepolia-explorer.giwa.io/address/0x307eFc47664f47d68C6D5867D99c30bb032d2E79) | Deployed, source verified |
 | Contract tests | This repository | 13 tests passing |
-| Server check of a payment | MyStarPick service | Built. It confirmed both payments below and rejected a wrong order reference. The exact amount check is still to be added |
+| Server check of a payment | MyStarPick service | Live in the demo contest. Checks the gateway, the order reference, the token and the exact amount |
+| Wallet payment in the app | [Demo contest](https://mystarpick.io/VNDEMO) | Live on the testnet with a standard browser wallet such as MetaMask |
 
 Payments made on GIWA Sepolia:
 
+- Payment made in the live app on 2026-11-26. A wallet paid 2 `GTT` for a pack of 10
+  votes, the service confirmed it on chain, issued the votes and cast them:
+  [`0xde9bba16...245f30`](https://sepolia-explorer.giwa.io/tx/0xde9bba162274156d2b72b0dc9b69a13e9617de0630e9994b8ef5f1204c245f30)
 - Token payment. The fan's wallet paid 100 `GTT`, the treasury received 100 `GTT`, and
   the gateway emitted `Purchased`:
   [`0xc4ef825e...c1f63b`](https://sepolia-explorer.giwa.io/tx/0xc4ef825e432d6d806b6af7ed7554b52de15a619e76dacd7efe4a0fed59c1f63b)
@@ -115,25 +121,23 @@ stablecoin until one is available on GIWA.
 
 ## What is left
 
-The contract is ready and the server check works end to end on testnet. These steps
-remain before fans can use it:
+Wallet payment already works end to end on the testnet, in the demo contest. Votes
+bought with the test token can be used only in demo contests, never in a real one.
+These steps remain before fans can use it in real contests:
 
 1. **A real stablecoin on GIWA mainnet.** We add it to the accepted list. A stablecoin
    has a steady price, so a pack of votes costs a fixed number of tokens and no price
    feed is needed.
-2. **GIWA Wallet connection in the app.** The "Pay with GIWA Wallet" button is already
-   on the purchase screen of the demo contest, where it opens a "coming soon" notice.
-   Next it will open GIWA Wallet with the amount and the order reference filled in.
-3. **Exact amount check.** The server compares the token and the amount of each
-   payment with the price of the order before it issues votes.
-4. **Mainnet deployment.** The gateway is deployed with a multisig as owner and as
+2. **GIWA Wallet.** The app already talks to wallets through the standard browser
+   wallet interface. When the GIWA Wallet app is released, it connects the same way.
+3. **Mainnet deployment.** The gateway is deployed with a multisig as owner and as
    treasury.
-5. **Waiting for finality.** The service issues votes only after the payment block is
+4. **Waiting for finality.** The service issues votes only after the payment block is
    final, and a scheduled job scans the gateway events to catch any payment the app
    failed to report.
-6. **Refund rules.** A payment on chain cannot be reversed, so refunds are sent as a
+5. **Refund rules.** A payment on chain cannot be reversed, so refunds are sent as a
    new transfer from the treasury under a written policy.
-7. **Legal review.** Accepting stablecoin payments is reviewed for each country before
+6. **Legal review.** Accepting stablecoin payments is reviewed for each country before
    it is turned on there.
 
 Target: stablecoin voting in GIWA Wallet in the first half of 2027.
